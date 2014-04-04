@@ -418,7 +418,7 @@ apache_get_username ()
 #ifdef HAVE_UNIXD
 #if defined(APACHE24)
 	return ap_unixd_config.user_name;
-#else 
+#else
 	return unixd_config.user_name;
 #endif
 #else
@@ -501,7 +501,7 @@ ensure_dashboard_initialized (module_cfg *config, xsp_data *xsp, apr_pool_t *p)
 		DEBUG_PRINT (1, "Setting mutex permissions for %s", xsp->dashboard_lock_file);
 #if defined(APACHE24)
 		rv = ap_unixd_set_global_mutex_perms (xsp->dashboard_mutex);
-#else 
+#else
 		rv = unixd_set_global_mutex_perms (xsp->dashboard_mutex);
 #endif
     if (rv != APR_SUCCESS) {
@@ -749,7 +749,7 @@ store_config_xsp (cmd_parms *cmd, void *notused, const char *first, const char *
 		value = second;
 		is_default = (!strcmp (alias, "default"));
 	}
-	
+
 	/* Disable autoapp if there's any other application. MonoDebug is excluded. */
 	if (!config->auto_app_set)
 		config->auto_app = FALSE;
@@ -872,7 +872,7 @@ connection_get_remote_port (conn_rec *c)
 #else
 #if defined(APACHE24)
   return c->client_addr->port;
-#else 
+#else
 	apr_port_t port;
 	apr_sockaddr_port_get (&port, c->remote_addr);
 	return port;
@@ -1674,6 +1674,9 @@ fork_mod_mono_server (apr_pool_t *pool, xsp_data *config)
 	if (tmp == NULL)
 		tmp = "";
 
+	/* Use $OPENSHIFT_HOMEDIR as server_path (for running on OpenShift Origin) */
+	server_path = getenv("OPENSHIFT_HOMEDIR");
+
 	if (config->server_path && config->server_path [0])
 		server_path = config->server_path;
 	else if (config->target_framework && config->target_framework [0]) {
@@ -1763,7 +1766,7 @@ fork_mod_mono_server (apr_pool_t *pool, xsp_data *config)
 		if (strcasecmp (config->hidden, "false"))
 			argv [argi++] = "--no-hidden";
 	}
-	
+
 	argv [argi++] = "--nonstop";
 	if (config->document_root != NULL) {
 		argv [argi++] = "--root";
@@ -2018,7 +2021,7 @@ send_initial_data (request_rec *r, apr_socket_t *sock, char auto_app)
 	size += sizeof (int32_t);
 #if defined(APACHE24)
   info.remote_ip_len = strlen (r->connection->client_ip);
-#else 
+#else
   info.remote_ip_len = strlen (r->connection->remote_ip);
 #endif
   size += info.remote_ip_len + sizeof (int32_t);
@@ -2070,7 +2073,7 @@ send_initial_data (request_rec *r, apr_socket_t *sock, char auto_app)
 	ptr += sizeof (int32_t);
 #if defined(APACHE24)
 	ptr += write_string_to_buffer (ptr, 0, r->connection->client_ip, info.remote_ip_len);
-#else 
+#else
 	ptr += write_string_to_buffer (ptr, 0, r->connection->remote_ip, info.remote_ip_len);
 #endif
 	i = connection_get_remote_port (r->connection);
